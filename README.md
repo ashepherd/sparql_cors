@@ -1,0 +1,4 @@
+cors
+====
+
+Enable CORS support
