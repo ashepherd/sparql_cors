@@ -2,5 +2,5 @@
 
 function cors_uninstall(){
 
-  variable_del('cors_menu_items');
+  variable_del('cors_config');
 }
