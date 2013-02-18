@@ -1,0 +1,7 @@
+name = SPARQL CORS
+description = Enable CORS support for the SPARQL module
+core = 7.x
+version = 7.x-1.0
+package = RDF
+configure = admin/config/sparql_cors
+

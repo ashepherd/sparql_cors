@@ -1,0 +1,6 @@
+<?php
+
+function sparql_cors_uninstall(){
+
+  variable_del('sparql_cors_config');
+}

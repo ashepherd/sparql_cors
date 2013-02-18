@@ -1,6 +1,0 @@
-<?php
-
-function cors_uninstall(){
-
-  variable_del('cors_config');
-}

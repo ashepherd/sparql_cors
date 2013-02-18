@@ -1,0 +1,108 @@
+<?php
+/*
+ * sparql_cors 
+ *
+ * In support of the Access-Control-Allow-Origin response header, 
+ * this allows Javascript clients to make AJAX GET requests
+ * against the SPARQL endpoint
+ *
+ * @see http://enable-cors.org
+ * 
+ * system variable structure (sparql_cors_config)
+ * -------------------------------------------
+ * array(
+ *   'domains' => array(
+ *     '<domain name>', <domain_name>, ...
+ *   ),
+ * );
+ */
+	
+/*
+ * Implements hook_menu()
+ */ 
+function sparql_cors_menu(){
+  
+  $items['admin/config/sparql_cors'] = array(
+    'title' => 'SPARQL CORS Configuration',
+    'description' => 'Configure CORS settings for the SPARQL endpoint',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sparql_cors_config'),
+    'access arguments' => array('administer administration pages'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/*
+ * Implements hook_page_delivery_callback_alter()
+ *
+ * If the current request is a GET against the SPARQL endpoint and
+ * the domain has been configured as allowed (/admin/config/sparql_cors)
+ * then add the Access-Control-Allow-Origin response header.
+ * 
+ */
+function sparql_cors_page_delivery_callback_alter(&$callback){
+	
+	if( $_SERVER['REQUEST_METHOD'] != 'GET' ){
+	  return;
+	}
+	
+  $domain = !is_null(drupal_get_http_header('Origin')) ? drupal_get_http_header('Origin') : '*';
+  $cors = variable_get('sparql_cors_config',array());
+	
+	//if there is no configured domain, then exit
+	if( !in_array($domain, $cors['domains']) ){
+	  return;
+	}
+	
+		
+  $menu_item = menu_get_active_trail();
+  $item = $menu_item[count($menu_item)-1];
+  if(isset($item['link_path']) &&  $item['link_path'] == 'sparql' ){
+    drupal_add_http_header('Access-Control-Allow-Origin', $domain);
+  } 
+}
+
+/*
+ * The system corfiguration form where the domains, their paths, and the global default CORS support is defined
+ *
+ */
+function sparql_cors_config($form, &$form_state){
+
+  $cfg = variable_get('sparql_cors_config',array());  
+  $domains = isset($cfg['domains']) ? $cfg['domains'] : array();
+  
+  $form['domains_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Domains to enable CORS support'),
+    '#description' => t('\'*\' - allow all domains. Other domains are usually specified like: \'example.com\' or \'http://www.example.com\'.'),
+  );
+      
+  $form['domains_fieldset']['domains'] = array(
+    '#type' => 'textarea',
+    '#default_value' => isset($domains) ? implode("\n",$domains) : '',
+    '#title' => t('Domains: '),
+  );
+ 
+  $form['actions']['#type'] = 'actions';
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+  );
+
+  $form['#submit'][] = 'sparql_cors_config_submit';
+  $form['#theme'] = 'system_settings_form';
+  
+  return $form;
+}
+
+function sparql_cors_config_submit($form, &$form_state){
+
+	$domains = explode("\n", $form_state['values']['domains']);
+  
+  $cfg = array(
+  	'domains' => $domains,
+  );
+  variable_set('sparql_cors_config',$cfg);
+  drupal_set_message('The configuration options have been saved.');
+}
