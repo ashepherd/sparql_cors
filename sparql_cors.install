@@ -1,6 +1,11 @@
 <?php
 
-function sparql_cors_uninstall(){
+/**
+ * @file
+ * Install, update, and uninstall functions for the sparql_cors module.
+ */
+ 
+function sparql_cors_uninstall() {
 
   variable_del('sparql_cors_config');
 }
